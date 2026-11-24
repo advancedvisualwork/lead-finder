@@ -1,17 +1,13 @@
 // Data-quality audit: samples real searches and checks phone validity, DDD consistency and
 // whether the registered street matches the street at the establishment's coordinates.
-// Usage: npm run build -w apps/api && node scripts/audit-lead-quality.mjs [samplesPerSearch]
-import { createRequire } from 'node:module';
+// Usage: npm run audit:data -- [samplesPerSearch] [output.json]
 import { writeFileSync } from 'node:fs';
-
-const require = createRequire(import.meta.url);
-const dist = (path) => require(`../apps/api/dist/${path}`);
-const { appConfig } = dist('config/app.config');
-const { findNicheById } = dist('leads/domain/niche-catalog');
-const { NominatimClient } = dist('leads/infrastructure/osm/nominatim.client');
-const { OverpassClient } = dist('leads/infrastructure/osm/overpass.client');
-const { mapOverpassElement } = dist('leads/infrastructure/osm/osm-lead.mapper');
-const { belongsToCity } = dist('leads/infrastructure/osm/osm-lead.provider');
+import { appConfig } from '../server/config/app.config.ts';
+import { findNicheById } from '../server/leads/domain/niche-catalog.ts';
+import { NominatimClient } from '../server/leads/infrastructure/osm/nominatim.client.ts';
+import { OverpassClient } from '../server/leads/infrastructure/osm/overpass.client.ts';
+import { mapOverpassElement } from '../server/leads/infrastructure/osm/osm-lead.mapper.ts';
+import { belongsToCity } from '../server/leads/infrastructure/osm/osm-lead.provider.ts';
 
 const SEARCHES = [
   { city: 'Campinas, SP', niche: 'dentista', ddd: '19' },

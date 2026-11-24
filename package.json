@@ -1,16 +1,31 @@
 {
   "name": "lead-finder",
   "private": true,
-  "version": "1.0.0",
-  "workspaces": [
-    "apps/api",
-    "apps/web"
-  ],
+  "version": "2.0.0",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "dev:api": "npm run dev -w apps/api",
-    "dev:web": "npm run dev -w apps/web",
-    "build": "npm run build -w apps/api && npm run build -w apps/web",
-    "typecheck": "npm run typecheck -w apps/api && npm run typecheck -w apps/web",
-    "test": "npm run test -w apps/api && npm run test -w apps/web"
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "audit:data": "tsx scripts/audit-lead-quality.mjs"
+  },
+  "dependencies": {
+    "next": "^15.5.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "zod": "^3.25.0",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.0"
   }
 }
