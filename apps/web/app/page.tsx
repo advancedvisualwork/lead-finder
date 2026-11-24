@@ -2,18 +2,18 @@
 
 import { ResultsPanel } from '@/components/ResultsPanel';
 import { SearchForm } from '@/components/SearchForm';
-import { useLeadSearch } from '@/hooks/useLeadSearch';
+import { useMultiCitySearch } from '@/hooks/useMultiCitySearch';
 import { useNiches } from '@/hooks/useNiches';
 
 export default function HomePage() {
   const { niches, isLoading: nichesLoading, error: nichesError } = useNiches();
-  const { state, search } = useLeadSearch();
+  const { state, search, cancel } = useMultiCitySearch();
 
   return (
     <main className="container">
       <header className="hero">
         <h1>Lead Finder</h1>
-        <p>Encontre empresas por cidade e nicho e exporte a lista em CSV.</p>
+        <p>Encontre empresas por cidade e nicho, filtre quem não tem site e exporte a lista em CSV.</p>
       </header>
 
       <section className="card" aria-label="Filtros de busca">
@@ -21,8 +21,9 @@ export default function HomePage() {
         <SearchForm
           niches={niches}
           nichesLoading={nichesLoading}
-          isSearching={state.status === 'loading'}
+          isSearching={state.status === 'running'}
           onSearch={search}
+          onCancel={cancel}
         />
       </section>
 

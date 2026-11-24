@@ -2,8 +2,9 @@ import { Inject, Injectable } from '@nestjs/common';
 import type { Lead, LeadSearchResult } from '../domain/lead';
 import { LEAD_PROVIDER, type LeadProvider } from '../domain/lead-provider';
 import { findNicheById, type Niche } from '../domain/niche-catalog';
-import type { SearchLeadsQuery } from '../presentation/search-leads.query';
+import type { ExportLeadsQuery, SearchLeadsQuery } from '../presentation/search-leads.query';
 import { dedupeAndSortLeads } from './dedupe-leads';
+import { applyLeadFilters, countLeads } from './lead-filters';
 import { TtlCache } from './ttl-cache';
 
 export const LEAD_CACHE = Symbol('LEAD_CACHE');
@@ -19,13 +20,35 @@ export class SearchLeadsService {
   ) {}
 
   async execute(query: SearchLeadsQuery): Promise<LeadSearchResult> {
-    const niche = findNicheById(query.niche);
-    if (!niche) {
-      throw new Error(`Unknown niche passed validation: ${query.niche}`);
-    }
+    const niche = this.resolveNiche(query.niche);
     const allLeads = await this.findLeads(query.city, niche);
-    const leads = query.onlyWithPhone ? allLeads.filter((lead) => lead.phone !== '') : allLeads;
-    return { city: query.city, niche: niche.label, source: this.provider.source, total: leads.length, leads };
+    const leads = applyLeadFilters(allLeads, query);
+    return {
+      city: query.city,
+      niche: niche.label,
+      source: this.provider.source,
+      total: leads.length,
+      counts: countLeads(allLeads, query.instagramCountsAsNoWebsite),
+      leads,
+    };
+  }
+
+  /** Cities run sequentially to respect the 1 req/s Nominatim policy; most hits come from cache. */
+  async executeForCities(query: ExportLeadsQuery): Promise<Lead[]> {
+    const leads: Lead[] = [];
+    for (const city of query.city) {
+      const result = await this.execute({ ...query, city });
+      leads.push(...result.leads);
+    }
+    return leads;
+  }
+
+  private resolveNiche(nicheId: string): Niche {
+    const niche = findNicheById(nicheId);
+    if (!niche) {
+      throw new Error(`Unknown niche passed validation: ${nicheId}`);
+    }
+    return niche;
   }
 
   private findLeads(city: string, niche: Niche): Promise<Lead[]> {

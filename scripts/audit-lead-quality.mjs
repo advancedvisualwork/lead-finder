@@ -57,7 +57,7 @@ async function auditSearch({ city, niche: nicheId, ddd }, nominatim, overpass) {
   const elements = (await overpass.findElements(location.boundingBox, niche.osmTags)).filter((e) =>
     belongsToCity(e, location),
   );
-  const leads = elements.map((e) => ({ element: e, lead: mapOverpassElement(e, niche) })).filter((x) => x.lead);
+  const leads = elements.map((e) => ({ element: e, lead: mapOverpassElement(e, niche, city) })).filter((x) => x.lead);
   const withPhone = leads.filter((x) => x.lead.phone);
   const validFormat = withPhone.filter((x) => PHONE_FORMAT.test(x.lead.phone));
   const dddMatch = validFormat.filter((x) => x.lead.phone.startsWith(`(${ddd})`));
@@ -95,6 +95,11 @@ async function auditSearch({ city, niche: nicheId, ddd }, nominatim, overpass) {
     otherDdd: validFormat.filter((x) => !x.lead.phone.startsWith(`(${ddd})`)).map((x) => `${x.lead.name}: ${x.lead.phone}`),
     withAddress: leads.filter((x) => x.lead.address).length,
     withStreet: withStreet.length,
+    withWebsite: leads.filter((x) => x.lead.website).length,
+    withInstagram: leads.filter((x) => x.lead.instagram).length,
+    instagramOnly: leads.filter((x) => x.lead.instagram && !x.lead.website).length,
+    unsafeUrls: leads.filter((x) => [x.lead.website, x.lead.instagram].some((u) => u && !/^https?:\/\//.test(u))).length,
+    instagramSamples: leads.filter((x) => x.lead.instagram).slice(0, 5).map((x) => `${x.lead.name}: ${x.lead.instagram}`),
     geoChecks,
   };
 }
@@ -106,12 +111,16 @@ function printReport(result) {
   console.log(`Telefone em formato válido: ${result.validFormat}/${result.withPhone} (${percent(result.validFormat, result.withPhone)})`);
   console.log(`DDD da cidade: ${result.dddMatch}/${result.validFormat} (${percent(result.dddMatch, result.validFormat)})`);
   console.log(`Com endereço: ${result.withAddress} (${percent(result.withAddress, result.total)}) | com rua: ${result.withStreet}`);
+  console.log(
+    `Com site: ${result.withWebsite} (${percent(result.withWebsite, result.total)}) | com Instagram: ${result.withInstagram} | só Instagram: ${result.instagramOnly} | URLs inseguras: ${result.unsafeUrls}`,
+  );
   console.log(`Rua cadastrada = rua no mapa: ${checked.filter((g) => g.streetMatch).length}/${checked.length}`);
   console.log(`Coordenada dentro da cidade: ${checked.filter((g) => g.cityMatch).length}/${checked.length}`);
   for (const g of checked) {
     const mark = g.streetMatch ? 'OK ' : 'DIF';
     console.log(`  [${mark}] ${g.name} | cadastro: ${g.registered} | mapa: ${g.actualRoad} (${g.actualCity})`);
   }
+  for (const sample of result.instagramSamples) console.log(`  [IG ] ${sample}`);
   if (result.invalidPhones.length) console.log(`  Telefones fora do padrão: ${result.invalidPhones.join(' | ')}`);
   if (result.otherDdd.length) console.log(`  DDD diferente: ${result.otherDdd.join(' | ')}`);
 }

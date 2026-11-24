@@ -2,6 +2,7 @@ import type { AppConfig } from '../../../config/app.config';
 import type { Lead } from '../../domain/lead';
 import type { LeadProvider, LeadSearchCriteria } from '../../domain/lead-provider';
 import type { Niche } from '../../domain/niche-catalog';
+import { classifyWebPresence } from '../../domain/web-presence';
 import { fetchJson } from '../http/fetch-json';
 
 interface GooglePlace {
@@ -9,6 +10,7 @@ interface GooglePlace {
   displayName?: { text?: string };
   formattedAddress?: string;
   nationalPhoneNumber?: string;
+  websiteUri?: string;
 }
 
 interface GoogleSearchResponse {
@@ -17,11 +19,12 @@ interface GoogleSearchResponse {
 }
 
 const ENDPOINT = 'https://places.googleapis.com/v1/places:searchText';
-const FIELD_MASK = 'places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,nextPageToken';
+const FIELD_MASK =
+  'places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,nextPageToken';
 const PAGE_SIZE = 20;
 const MAX_PAGES = 3;
 
-export function mapGooglePlace(place: GooglePlace, niche: Niche): Lead | null {
+export function mapGooglePlace(place: GooglePlace, niche: Niche, city: string): Lead | null {
   const name = place.displayName?.text?.trim();
   if (!name) {
     return null;
@@ -32,6 +35,8 @@ export function mapGooglePlace(place: GooglePlace, niche: Niche): Lead | null {
     phone: place.nationalPhoneNumber?.trim() ?? '',
     address: place.formattedAddress?.trim() ?? '',
     niche: niche.label,
+    city,
+    ...classifyWebPresence([place.websiteUri], []),
     source: 'google-places',
   };
 }
@@ -51,7 +56,7 @@ export class GooglePlacesLeadProvider implements LeadProvider {
     for (let page = 0; page < MAX_PAGES; page++) {
       const response = await this.fetchPage(textQuery, pageToken);
       for (const place of response.places ?? []) {
-        const lead = mapGooglePlace(place, niche);
+        const lead = mapGooglePlace(place, niche, city);
         if (lead) leads.push(lead);
       }
       pageToken = response.nextPageToken;

@@ -1,4 +1,4 @@
-import type { LeadSearchParams, LeadSearchResult, NicheOption } from './types';
+import type { LeadFilters, LeadSearchResult, NicheOption } from './types';
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001').replace(/\/+$/, '');
 
@@ -12,12 +12,15 @@ export class ApiError extends Error {
   }
 }
 
-function toQueryString(params: LeadSearchParams): string {
-  return new URLSearchParams({
-    city: params.city,
-    niche: params.niche,
-    onlyWithPhone: String(params.onlyWithPhone),
-  }).toString();
+function toQueryString(cities: readonly string[], filters: LeadFilters): string {
+  const params = new URLSearchParams();
+  for (const city of cities) params.append('city', city);
+  params.set('niche', filters.niche);
+  params.set('onlyWithPhone', String(filters.onlyWithPhone));
+  params.set('withoutWebsite', String(filters.withoutWebsite));
+  params.set('instagramCountsAsNoWebsite', String(filters.instagramCountsAsNoWebsite));
+  params.set('limit', String(filters.limit));
+  return params.toString();
 }
 
 async function readErrorMessage(response: Response): Promise<string> {
@@ -47,10 +50,10 @@ export function fetchNiches(signal?: AbortSignal): Promise<NicheOption[]> {
   return getJson<NicheOption[]>('/api/niches', signal);
 }
 
-export function searchLeads(params: LeadSearchParams, signal?: AbortSignal): Promise<LeadSearchResult> {
-  return getJson<LeadSearchResult>(`/api/leads?${toQueryString(params)}`, signal);
+export function searchLeads(city: string, filters: LeadFilters, signal?: AbortSignal): Promise<LeadSearchResult> {
+  return getJson<LeadSearchResult>(`/api/leads?${toQueryString([city], filters)}`, signal);
 }
 
-export function buildExportUrl(params: LeadSearchParams): string {
-  return `${API_URL}/api/leads/export?${toQueryString(params)}`;
+export function buildExportUrl(cities: readonly string[], filters: LeadFilters): string {
+  return `${API_URL}/api/leads/export?${toQueryString(cities, filters)}`;
 }

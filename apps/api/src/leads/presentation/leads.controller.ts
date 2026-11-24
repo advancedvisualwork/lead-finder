@@ -5,9 +5,12 @@ import { buildCsvFileName, serializeLeadsToCsv } from '../application/lead-csv.s
 import { SearchLeadsService } from '../application/search-leads.service';
 import type { LeadSearchResult } from '../domain/lead';
 import { NICHES } from '../domain/niche-catalog';
-import { searchLeadsQuerySchema, type SearchLeadsQuery } from './search-leads.query';
-
-const queryPipe = new ZodValidationPipe(searchLeadsQuerySchema);
+import {
+  exportLeadsQuerySchema,
+  searchLeadsQuerySchema,
+  type ExportLeadsQuery,
+  type SearchLeadsQuery,
+} from './search-leads.query';
 
 @Controller()
 export class LeadsController {
@@ -19,7 +22,7 @@ export class LeadsController {
   }
 
   @Get('leads')
-  search(@Query(queryPipe) query: SearchLeadsQuery): Promise<LeadSearchResult> {
+  search(@Query(new ZodValidationPipe(searchLeadsQuerySchema)) query: SearchLeadsQuery): Promise<LeadSearchResult> {
     return this.searchLeads.execute(query);
   }
 
@@ -27,11 +30,11 @@ export class LeadsController {
   @Header('Content-Type', 'text/csv; charset=utf-8')
   @Header('Cache-Control', 'no-store')
   async exportCsv(
-    @Query(queryPipe) query: SearchLeadsQuery,
+    @Query(new ZodValidationPipe(exportLeadsQuerySchema)) query: ExportLeadsQuery,
     @Res({ passthrough: true }) response: Response,
   ): Promise<string> {
-    const result = await this.searchLeads.execute(query);
+    const leads = await this.searchLeads.executeForCities(query);
     response.setHeader('Content-Disposition', `attachment; filename="${buildCsvFileName(query.city, query.niche)}"`);
-    return serializeLeadsToCsv(result.leads);
+    return serializeLeadsToCsv(leads);
   }
 }

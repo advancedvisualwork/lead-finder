@@ -36,9 +36,12 @@ describe('mapOverpassElement', () => {
           'addr:housenumber': '100',
           'addr:suburb': 'Centro',
           'addr:city': 'São Paulo',
+          website: 'https://www.instagram.com/sorriso;https://sorriso.com.br',
+          'contact:instagram': '@sorriso.odonto',
         },
       },
       dentist,
+      'São Paulo, SP',
     );
     expect(lead).toEqual({
       id: 'osm:node/42',
@@ -46,12 +49,15 @@ describe('mapOverpassElement', () => {
       phone: '(11) 3333-4444',
       address: 'Rua das Flores, 100 - Centro - São Paulo',
       niche: 'Dentista',
+      city: 'São Paulo, SP',
+      website: 'https://sorriso.com.br/',
+      instagram: 'https://www.instagram.com/sorriso.odonto',
       source: 'openstreetmap',
     });
   });
 
   it('discards elements without a name', () => {
-    expect(mapOverpassElement({ type: 'way', id: 1, tags: { amenity: 'dentist' } }, dentist)).toBeNull();
+    expect(mapOverpassElement({ type: 'way', id: 1, tags: { amenity: 'dentist' } }, dentist, 'Campinas')).toBeNull();
   });
 });
 

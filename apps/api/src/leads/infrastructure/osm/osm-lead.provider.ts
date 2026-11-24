@@ -43,7 +43,7 @@ export class OsmLeadProvider implements LeadProvider {
     const elements = await this.overpass.findElements(location.boundingBox, niche.osmTags);
     return elements
       .filter((element) => belongsToCity(element, location))
-      .map((element) => mapOverpassElement(element, niche))
+      .map((element) => mapOverpassElement(element, niche, city))
       .filter((lead): lead is Lead => lead !== null);
   }
 }
