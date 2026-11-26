@@ -3,7 +3,6 @@ import type { MultiCitySearchParams } from './types';
 
 /** Mirrors the API schema for instant feedback; the API remains the authority. */
 const CITY_PATTERN = /^[\p{L}\p{M}\s'.,-]+$/u;
-export const MAX_CITIES = 10;
 export const MAX_LIMIT = 200;
 
 export interface SearchFormValues {
@@ -24,10 +23,7 @@ const citySchema = z
   .regex(CITY_PATTERN, 'Use apenas letras, espaços e pontuação simples (ex.: "Campinas, SP").');
 
 const formSchema = z.object({
-  cities: z
-    .array(citySchema)
-    .min(1, 'Informe ao menos uma cidade.')
-    .max(MAX_CITIES, `Informe no máximo ${MAX_CITIES} cidades por busca.`),
+  cities: z.array(citySchema).min(1, 'Informe ao menos uma cidade.'),
   niche: z.string().min(1, 'Selecione um nicho.'),
   limit: z.coerce
     .number({ invalid_type_error: 'Informe um número.' })

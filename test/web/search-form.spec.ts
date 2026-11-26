@@ -47,10 +47,12 @@ describe('validateSearchForm', () => {
     }
   });
 
-  it('rejects empty input and more than 10 cities', () => {
+  it('rejects empty input and accepts any number of cities', () => {
     expect(validateSearchForm(values({ citiesText: ' \n ' })).success).toBe(false);
-    const eleven = Array.from({ length: 11 }, (_, i) => `Cidade ${String.fromCharCode(65 + i)}`).join('\n');
-    expect(validateSearchForm(values({ citiesText: eleven })).success).toBe(false);
+    const many = Array.from({ length: 50 }, (_, i) => `Cidade ${String.fromCharCode(65 + (i % 26))}${String.fromCharCode(65 + Math.floor(i / 26))}`).join('\n');
+    const result = validateSearchForm(values({ citiesText: many }));
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.cities).toHaveLength(50);
   });
 });
 

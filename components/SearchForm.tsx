@@ -2,7 +2,6 @@
 
 import { useState, type FormEvent } from 'react';
 import {
-  MAX_CITIES,
   MAX_LIMIT,
   parseCityList,
   validateSearchForm,
@@ -49,7 +48,7 @@ export function SearchForm({ niches, nichesLoading, isSearching, onSearch, onCan
     <form className="search-form" onSubmit={handleSubmit} noValidate aria-label="Buscar leads">
       <div className="field field-cities">
         <label htmlFor="cities">
-          Cidades <span className="muted">(uma por linha, até {MAX_CITIES})</span>
+          Cidades <span className="muted">(uma por linha)</span>
         </label>
         <textarea
           id="cities"

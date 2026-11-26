@@ -26,7 +26,7 @@ function WebPresence({ lead }: { lead: Lead }) {
   );
 }
 
-/** Paginated (25 rows/page) so the DOM stays small even with up to 2,000 leads (10 cities × 200). */
+/** Paginated (25 rows/page) so the DOM stays small no matter how many cities are searched. */
 export function LeadsTable({ leads }: { leads: Lead[] }) {
   const [page, setPage] = useState(0);
   const pageCount = Math.max(1, Math.ceil(leads.length / PAGE_SIZE));
